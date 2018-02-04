@@ -1,16 +1,46 @@
+import intersection from 'lodash/intersection';
 import pageApi from './pageApi'
 import db from './db';
 
 const topTags = [
-  '[Rr]ecruiter',
-  '[iI][tT]',
-  '[rR]ecruiting',
-  'HR',
-  '[Dd]eveloper',
-  'UX',
-  'UI',
+  'project manager',
+  'product manager',
+  'human resources',
+  'technical director',
+  'team leader',
+  'recruiter',
+  'coordinator',
+  'developer',
+  'acquisition',
+  'recruiting',
+  'recruitment',
+  'front-end',
+  'back-end',
+  'devops',
+  'ux/ui',
+];
+const tags = [
+  'it',
+  'hr',
+  'ux',
+  'ceo',
+  'ui',
+  'js',
+  'ios',
 ];
 const topTagsRegex = new RegExp(topTags.join('|'), 'g');
+
+// If false, record would be removed
+function filterByTag(record) {
+  const description = record.description.toLowerCase();
+  const hasRegexTag = description.search(topTagsRegex) !== -1;
+  if (hasRegexTag) {
+    return hasRegexTag;
+  }
+
+  return intersection(description.split(' '), tags).length;
+}
+window.filterByTag = filterByTag;
 
 function selectRecomendation(recomendations) {
   const removedFirst = recomendations
@@ -18,10 +48,10 @@ function selectRecomendation(recomendations) {
       return (
         r.connectionLevel !== 1 
         && !r.visited
-        && r.description.search(topTagsRegex) !== -1
+        && filterByTag(r)
       );
     })
-    .sort((left, right) => left.updated - right.updated);
+    .sort((left, right) => right.updated - left.updated);
   return removedFirst.length ? removedFirst[0] : null;
 }
 
@@ -62,7 +92,10 @@ async function main() {
   const profiles = await db.getProfiles();
   window.profiles = profiles;
   const visited = profiles.filter(p => p.visited);
-  console.warn('VISITED', visited);
+  const last24hours = (Date.now() - 1000*60*60*24) / 1000;
+  const visitedLast24 = profiles.filter(p => p.visited >= last24hours);
+  console.warn('VISITED', visited.length);
+  console.warn('VISITED last 24', visitedLast24.length);
 
   const newRecomendations = await getNewRecomendations();
 
@@ -71,17 +104,19 @@ async function main() {
     console.warn('DEAD END');
     return;
   }
-  await db.updateProfiles([
-    Object.assign(recomendation, { visited: Math.round(Date.now() / 1000) }),
-  ]);
-  if (visited.length >= 50) {
-    console.warn('LIMIT REACHED 50');
+  if (visitedLast24.length >= 100) {
+    console.warn('DAY LIMIT REACHED 100');
     return;
   }
-  console.warn('UPDATED, going to profile in 10 seconds', recomendation);
+  const randomTimeout = (1000 * 10) + (Math.random() * 1000 * 40);
+  console.warn(`Going to profile in ${Math.round(randomTimeout/1000)} seconds`, recomendation);
   setTimeout(() => {
-    window.location = `${window.location.origin}${recomendation.id}`;
-  }, 1000 * 10);
+    db.updateProfiles([
+      Object.assign(recomendation, { visited: Math.round(Date.now() / 1000) }),
+    ]).then(() => {
+      window.location = `${window.location.origin}${recomendation.id}`;
+    });
+  }, randomTimeout);
 }
 
 function initMessaging() {

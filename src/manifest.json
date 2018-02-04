@@ -1,5 +1,5 @@
 {
-  "name": "Chrome Extension Webpack",
+  "name": "lkdbrowser",
   "options_page": "options.html",
   "background": {
     "scripts": ["background.js"],

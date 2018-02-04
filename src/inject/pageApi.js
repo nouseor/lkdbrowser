@@ -30,7 +30,7 @@ async function getRecomendations() {
     result.push({
       id: item.getAttribute('href'),
       name: elements.img.getAttribute('alt'),
-      src: elements.img.getAttribute('src'),
+      // src: elements.img.getAttribute('src'),
       description: `${elements.description.textContent}`,
       connectionLevel: parseInt(elements.distValue.textContent, 10),
     });
