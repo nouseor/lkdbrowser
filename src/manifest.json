@@ -1,0 +1,20 @@
+{
+  "name": "Chrome Extension Webpack",
+  "options_page": "options.html",
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+  "manifest_version": 2,
+  "permissions": ["tabs", "activeTab", "storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["inject.js"]
+    }
+  ],
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}
