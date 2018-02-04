@@ -22,16 +22,19 @@ async function getRecomendations() {
   const result = [];
   const recomendations = await getRecomendationItems();
   recomendations.forEach((item) => {
-    const resultItem = {
-      id: item.getAttribute('href'),
-      href: item.getAttribute('href'),
-      name: item.querySelector('img').getAttribute('alt'),
-      src: item.querySelector('img').getAttribute('src'),
-      description: item.querySelector('p').textContent,
+    const elements = {
+      img: item.querySelector('img'),
+      description: item.querySelector('p'),
+      distValue: item.querySelector('.dist-value'),
     };
-    result.push(resultItem);
+    result.push({
+      id: item.getAttribute('href'),
+      name: elements.img.getAttribute('alt'),
+      src: elements.img.getAttribute('src'),
+      description: `${elements.description.textContent}`,
+      connectionLevel: parseInt(elements.distValue.textContent, 10),
+    });
   });
-  window.recomendations = recomendations;
   return result;
 }
 
