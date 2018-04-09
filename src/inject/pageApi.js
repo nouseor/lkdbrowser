@@ -38,6 +38,15 @@ async function getRecomendations() {
   return result;
 }
 
+async function getLocation() {
+  const locationElement = document.querySelector('.pv-top-card-section__location');
+  if (locationElement) {
+    return locationElement.textContent;
+  }
+  return false;
+}
+
 export default {
   getRecomendations,
+  getLocation,
 };

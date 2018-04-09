@@ -100,6 +100,30 @@ async function getProfilesByIds(ids) {
   });
 }
 
+async function deleteProfilesByIds(ids) {
+  return new Promise((resolve, reject) => {
+    const resultData = [];
+    const transaction = local.db.transaction(['profile'], 'readwrite');
+
+    transaction.oncomplete = function (event) {
+      resolve(resultData);
+    };
+    transaction.onerror = function (event) {
+      reject(event);
+    };
+
+    const profileStore = transaction.objectStore('profile');
+    ids.forEach((id) => {
+      var request = profileStore.delete(id);
+      request.onsuccess = function (event) {
+        if (event.target.result) {
+          resultData.push(event.target.result);
+        }
+      };
+    });
+  });
+}
+
 async function getProfiles() {
   return new Promise((resolve, rejct) => {
     const transaction = local.db.transaction(['profile'], 'readwrite');
@@ -117,6 +141,7 @@ export default {
   getProfilesByIds,
   addProfiles,
   getProfiles,
+  deleteProfilesByIds,
 };
 
 function removeExample() {

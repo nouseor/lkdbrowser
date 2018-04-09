@@ -1,6 +1,13 @@
 import intersection from 'lodash/intersection';
 import pageApi from './pageApi'
 import db from './db';
+import utils from './utils';
+
+const DAY_LIMIT = 15;
+
+const locations = [
+  'Ukraine',
+];
 
 const topTags = [
   'project manager',
@@ -72,6 +79,12 @@ async function findRecomendation(latest) {
 
 async function getNewRecomendations() {
   try {
+    const location = await pageApi.getLocation();
+    const locationIsOk = locations.find(l => l === location);
+    if (!locationIsOk) {
+      console.warn('Wrong location, will not gather data!', location);
+      return [];
+    }
     const recomendations = await pageApi.getRecomendations();
     const byIds = await db.getProfilesByIds(recomendations.map(r => r.id));
     const foundIds = byIds.map(i => i.id);
@@ -86,9 +99,21 @@ async function getNewRecomendations() {
   }
 }
 
+async function deleteAllUnvisited() {
+  const profiles = await db.getProfiles();
+  const notVisited = profiles
+    .filter(r => !r.visited);
+  console.warn('DELETING', notVisited.map(r => r.id));
+  const result = await db.deleteProfilesByIds(notVisited.map(r => r.id));
+  console.warn('DELETE RESULT', result);
+}
+
 async function main() {
   await db.init();
-  // DEBUG @TODO remove
+  // Uncoment to delete all crawled data
+  // await deleteAllUnvisited();
+  await utils.scrollToBottom();
+  await utils.scrollToTop();
   const profiles = await db.getProfiles();
   window.profiles = profiles;
   const visited = profiles.filter(p => p.visited);
@@ -104,8 +129,8 @@ async function main() {
     console.warn('DEAD END');
     return;
   }
-  if (visitedLast24.length >= 100) {
-    console.warn('DAY LIMIT REACHED 100');
+  if (visitedLast24.length >= DAY_LIMIT) {
+    console.warn(`DAY LIMIT REACHED ${DAY_LIMIT}`);
     return;
   }
   const randomTimeout = (1000 * 10) + (Math.random() * 1000 * 40);
